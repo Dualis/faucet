@@ -37,6 +37,41 @@ V2_TOP_CONFS = (
     'routers',
     'vlans')
 
+# Friendly names for ethertypes supported by ryu
+# See: https://github.com/osrg/ryu/blob/master/ryu/lib/packet/ether_types.py
+ACL_ETH_FRIENDLY = {
+    # Core OpenFlow 1.3 functionality
+    'ipv4':  0x0800,
+    'arp':   0x0806,
+    'ipv6':  0x86dd,
+    'mpls':  0x8847,
+    # MPSL unicast and multicast
+    'mplsu': 0x8847,
+    'mplsm': 0x8848,
+    # VLAN/SPB (IEEE 802.1q)
+    'vlan':  0x8100,
+    'spb':   0x8100,
+
+    # Other protocols
+    'pbb':   0x88e7,
+    'lldp':  0x88cc,
+    'slow':  0x8809,
+    'teb':   0x6558,
+    'cfm':   0x8902
+}
+
+# Friendly names for IP protocols with OpenFlow classifier fields
+ACL_IPPROTO = {
+    # Core OpenFlow 1.3 functionality
+    'tcp':    6,
+    'udp':    17,
+    'sctp':   132,
+    'icmp4':  1,
+    'icmpv4': 1,
+    'icmp6':  58,
+    'icmpv6': 58
+    # Other commonly used protocols?
+}
 
 def dp_parser(config_file, logname):
     conf = config_parser_util.read_config(config_file, logname)
@@ -148,6 +183,16 @@ def _dp_parser_v2(acls_conf, dps_conf, meters_conf,
         for vlan_ident, vlan_conf in list(vlans_conf.items()):
             vlans[vlan_ident] = VLAN(vlan_ident, dp_id, vlan_conf)
         for acl_ident, acl_conf in list(acls_conf.items()):
+            if 'dl_type' in acl_conf 
+                and acl_conf['dl_type'] in ACL_ETH_FRIENDLY:
+                    eth_name = acl_conf['dl_type']
+                    eth_value = ACL_ETH_FRIENDLY[eth_name]
+                    acl_conf['dl_type'] = eth_value
+            if 'ip_proto' in acl_conf 
+                and acl_conf['ip_proto'] in ACL_IPPROTO:
+                    proto_name = acl_conf['ip_proto']
+                    eth_value = ACL_IPPROTO[proto_name]
+                    acl_conf['ip_proto'] = eth_value
             acl = ACL(acl_ident, dp_id, acl_conf)
             dp.add_acl(acl_ident, acl)
         for router_ident, router_conf in list(routers_conf.items()):
