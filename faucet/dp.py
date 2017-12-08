@@ -430,10 +430,7 @@ Further sublevels of configuration can be configured as follows:
         if graph.size():
             for edge_name, count in list(edge_count.items()):
                 assert count == 2, '%s defined only in one direction' % edge_name
-            if self.stack is None:
-                self.stack = {}
-            self.stack['root_dp'] = root_dp
-            self.stack['graph'] = graph
+            return (graph, root_dp)
 
     def shortest_path(self, dest_dp):
         """Return shortest path to a DP, as a list of DPs."""
