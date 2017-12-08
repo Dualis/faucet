@@ -163,7 +163,8 @@ def _dp_parser_v2(acls_conf, dps_conf, meters_conf,
         dp.finalize_config(dps)
     
     graph, root_dp = dp.resolve_stack_topology(dps)
-    for dp in dps:
+    if graph:
+        for dp in dps:
             if dp.stack is None:
                 dp.stack = {}
             dp.stack['graph'] = graph
