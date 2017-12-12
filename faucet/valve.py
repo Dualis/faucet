@@ -359,12 +359,10 @@ class Valve(object):
                     graph.add_node(name)
                 up_stack_ports = [ port for port in self.dp.stack_ports 
                                     if port.number in discovered_up_port_nums]
-                for port in up_stack_port:
-                    peer_dp = port.stack['dp']
-                    peer_port = port.stack['port']
+                for port in up_stack_ports:
                     # TODO: Check if port is up on the peer.
                     #       Requires access to all dps
-                    dp.stack_add_edge(port, graph)
+                    self.dp.stack_add_edge(port, graph)
 
         return ofmsgs
 
