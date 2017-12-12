@@ -366,8 +366,46 @@ Further sublevels of configuration can be configured as follows:
         """Add a VLAN to this datapath."""
         self.vlans[vlan.vid] = vlan
 
-    def resolve_stack_topology(self, dps):
+    @staticmethod
+    def resolve_stack_topology(dps):
         """Resolve inter-DP config for stacking."""
+
+        root_dp = None
+        stack_dps = []
+        for dp in dps:
+            if dp.stack is not None:
+                stack_dps.append(dp)
+                if 'priority' in dp.stack:
+                    assert root_dp is None, 'cannot have multiple stack roots'
+                    root_dp = dp
+                    for vlan in list(dp.vlans.values()):
+                        assert vlan.faucet_vips == [], 'routing + stacking not supported'
+
+        if root_dp is None:
+            assert not stack_dps, 'stacking enabled but no root_dp'
+            return
+
+        edge_count = {}
+
+        graph = networkx.MultiGraph()
+        for dp in dps:
+            graph.add_node(dp.name)
+            for port in dp.stack_ports:
+                edge_name = stack_add_edge(dp, port, graph)
+                if edge_name not in edge_count:
+                    edge_count[edge_name] = 0
+                edge_count[edge_name] += 1
+
+        if graph.size():
+            for edge_name, count in list(edge_count.items()):
+                assert count == 2, '%s defined only in one direction' % edge_name
+            return (graph, root_dp)
+
+    @staticmethod
+    def stack_add_edge(dp, port, graph)
+        """ Add a link to the given network graph in a consistent manner. 
+
+            Returns the name of the new edge."""
 
         def canonical_edge(dp, port):
             peer_dp = port.stack['dp']
@@ -393,44 +431,21 @@ Further sublevels of configuration can be configured as follows:
             return {
                 'dp_a': edge_a_dp, 'port_a': edge_a_port,
                 'dp_z': edge_z_dp, 'port_z': edge_z_port}
-
-        root_dp = None
-        stack_dps = []
-        for dp in dps:
-            if dp.stack is not None:
-                stack_dps.append(dp)
-                if 'priority' in dp.stack:
-                    assert root_dp is None, 'cannot have multiple stack roots'
-                    root_dp = dp
-                    for vlan in list(dp.vlans.values()):
-                        assert vlan.faucet_vips == [], 'routing + stacking not supported'
-
-        if root_dp is None:
-            assert not stack_dps, 'stacking enabled but no root_dp'
+        
+        if not port.stack:
             return
 
-        edge_count = {}
-
-        graph = networkx.MultiGraph()
-        for dp in dps:
-            graph.add_node(dp.name)
-            for port in dp.stack_ports:
-                edge = canonical_edge(dp, port)
-                edge_a, edge_z = edge
-                edge_name = make_edge_name(edge_a, edge_z)
-                edge_attr = make_edge_attr(edge_a, edge_z)
-                edge_a_dp, _ = edge_a
-                edge_z_dp, _ = edge_z
-                if edge_name not in edge_count:
-                    edge_count[edge_name] = 0
-                edge_count[edge_name] += 1
-                graph.add_edge(
+        edge = canonical_edge(dp, port)
+        edge_a, edge_z = edge
+        edge_name = make_edge_name(edge_a, edge_z)
+        edge_attr = make_edge_attr(edge_a, edge_z)
+        edge_a_dp, _ = edge_a
+        edge_z_dp, _ = edge_z
+    
+        graph.add_edge(
                     edge_a_dp.name, edge_z_dp.name,
                     key=edge_name, port_map=edge_attr)
-        if graph.size():
-            for edge_name, count in list(edge_count.items()):
-                assert count == 2, '%s defined only in one direction' % edge_name
-            return (graph, root_dp)
+        return edge_name 
 
     def shortest_path(self, dest_dp):
         """Return shortest path to a DP, as a list of DPs."""
