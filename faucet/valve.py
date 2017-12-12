@@ -506,6 +506,12 @@ class Valve(object):
                     priority=self.dp.low_priority,
                     inst=[valve_of.goto_table(eth_src_table)]))
                 port_vlans = list(self.dp.vlans.values())
+                # Update the network graph
+                if self.dp.stack:
+                    graph = self.dp.stack['graph']
+                    # TODO: Check if port is up on peer dp
+                    #       Needs access to all dps
+                    self.dp.stack_add_edge(port, graph)
             else:
                 mirror_act = []
                 # Add mirroring if any
@@ -563,6 +569,14 @@ class Valve(object):
                 ofmsgs.extend(self._port_delete_flows_state(port))
             for vlan in port.vlans():
                 vlans_with_deleted_ports.add(vlan)
+
+            if port.stack:
+                graph = self.dp.stack['graph']
+                dp_name = self.dp.name
+                adj_dps = set(graph.adj[dp_name])
+                dst_dp = port.stack['dp']
+                if dst_dp in adj_dps:
+                    graph.remove_edge(dp_name, dst_dp)
 
         for vlan in vlans_with_deleted_ports:
             ofmsgs.extend(self.flood_manager.build_flood_rules(
