@@ -391,7 +391,7 @@ Further sublevels of configuration can be configured as follows:
         for dp in dps:
             graph.add_node(dp.name)
             for port in dp.stack_ports:
-                edge_name = stack_add_edge(dp, port, graph)
+                edge_name = dp.stack_add_edge(port, graph)
                 if edge_name not in edge_count:
                     edge_count[edge_name] = 0
                 edge_count[edge_name] += 1
@@ -401,8 +401,7 @@ Further sublevels of configuration can be configured as follows:
                 assert count == 2, '%s defined only in one direction' % edge_name
             return (graph, root_dp)
 
-    @staticmethod
-    def stack_add_edge(dp, port, graph)
+    def stack_add_edge(self, port, graph)
         """ Add a link to the given network graph in a consistent manner. 
 
             Returns the name of the new edge."""
