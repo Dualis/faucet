@@ -402,7 +402,7 @@ Further sublevels of configuration can be configured as follows:
             return (graph, root_dp)
 
     def stack_add_edge(self, port, graph)
-        """ Add a link to the given network graph in a consistent manner. 
+        """ Add an edge to the given network graph in a consistent manner. 
 
             Returns the name of the new edge."""
 

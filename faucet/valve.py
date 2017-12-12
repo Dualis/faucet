@@ -350,6 +350,22 @@ class Valve(object):
         ofmsgs.extend(self._add_ports_and_vlans(discovered_up_port_nums))
         ofmsgs.extend(self._add_controller_learn_flow())
         self.dp.running = True
+
+        if self.dp.stack:
+            graph = self.dp.graph
+            name = self.dp.name
+            if graph:
+                if name not in graph.nodes:
+                    graph.add_node(name)
+                up_stack_ports = [ port for port in self.dp.stack_ports 
+                                    if port.number in discovered_up_port_nums]
+                for port in up_stack_port:
+                    peer_dp = port.stack['dp']
+                    peer_port = port.stack['port']
+                    # TODO: Check if port is up on the peer.
+                    #       Requires access to all dps
+                    dp.stack_add_edge(port, graph)
+
         return ofmsgs
 
     def datapath_disconnect(self):
@@ -359,6 +375,12 @@ class Valve(object):
             {'DP_CHANGE': {
                 'reason': 'disconnect'}})
         self.dp.running = False
+
+        if self.dp.stack:
+            graph = self.dp.stack['graph']
+            name = self.dp.name
+            if graph and name in graph.nodes:
+                graph.remove_node(name) # Removes this dp and all connected edges
 
     def _port_add_acl(self, port, cold_start=False):
         ofmsgs = []
