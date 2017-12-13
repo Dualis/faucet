@@ -352,7 +352,7 @@ class Valve(object):
         self.dp.running = True
 
         if self.dp.stack:
-            graph = self.dp.graph
+            graph = self.dp.stack['graph']
             name = self.dp.name
             if graph:
                 if name not in graph.nodes:

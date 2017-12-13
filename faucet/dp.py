@@ -434,7 +434,7 @@ Further sublevels of configuration can be configured as follows:
         if not port.stack:
             return
 
-        edge = canonical_edge(dp, port)
+        edge = canonical_edge(self, port)
         edge_a, edge_z = edge
         edge_name = make_edge_name(edge_a, edge_z)
         edge_attr = make_edge_attr(edge_a, edge_z)
