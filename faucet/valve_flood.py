@@ -203,8 +203,13 @@ class ValveFloodStackManager(ValveFloodManager):
             flood_table, flood_priority, use_group_table, groups)
         self.stack = stack
         self.stack_ports = stack_ports
-        my_root_distance = len(dp_shortest_path_to_root())
-        self.shortest_path_port = shortest_path_port
+        self.shortest_path_to_root = dp_shortest_path_to_root
+        self.shortest_part_port = shortest_path_port
+
+
+    def _build_flood_ports(self):
+        """Calculates ports to use for flooding"""
+        my_root_distance = len(self.shortest_path_to_root())
         self.towards_root_stack_ports = []
         self.away_from_root_stack_ports = []
         for port in self.stack_ports:
@@ -294,6 +299,7 @@ class ValveFloodStackManager(ValveFloodManager):
         if modify:
             command = valve_of.ofp.OFPFC_MODIFY_STRICT
         # TODO: group tables for stacking
+        self._build_flood_ports()
         return self._build_multiout_flood_rules(vlan, command)
 
     def _vlan_all_ports(self, vlan, exclude_unicast):
