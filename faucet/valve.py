@@ -512,6 +512,7 @@ class Valve(object):
                     # TODO: Check if port is up on peer dp
                     #       Needs access to all dps
                     self.dp.stack_add_edge(port, graph)
+                    # TODO: Add new flood rules.
             else:
                 mirror_act = []
                 # Add mirroring if any
@@ -577,6 +578,7 @@ class Valve(object):
                 dst_dp = port.stack['dp']
                 if dst_dp in adj_dps:
                     graph.remove_edge(dp_name, dst_dp)
+                    vlans_with_deleted_ports.update(self.dp.vlans)
 
         for vlan in vlans_with_deleted_ports:
             ofmsgs.extend(self.flood_manager.build_flood_rules(
