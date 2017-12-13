@@ -574,15 +574,15 @@ class Valve(object):
             if port.stack:
                 graph = self.dp.stack['graph']
                 dp_name = self.dp.name
-                adj_dps = set(graph.adj[dp_name])
                 dst_dp = port.stack['dp']
-                if dst_dp in adj_dps:
+                if graph.has_edge(dp_name, dst_dp):
                     graph.remove_edge(dp_name, dst_dp)
-                    vlans_with_deleted_ports.update(self.dp.vlans)
+                vlans_with_deleted_ports.update(self.dp.vlans.values())
 
         for vlan in vlans_with_deleted_ports:
             ofmsgs.extend(self.flood_manager.build_flood_rules(
                 vlan, modify=True))
+            # TODO: Cascade flood port updates as neccessary (Stacking)
 
         return ofmsgs
 
