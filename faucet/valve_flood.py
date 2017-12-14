@@ -204,17 +204,25 @@ class ValveFloodStackManager(ValveFloodManager):
         self.stack = stack
         self.stack_ports = stack_ports
         self.shortest_path_to_root = dp_shortest_path_to_root
-        self.shortest_part_port = shortest_path_port
+        self.shortest_path_port = shortest_path_port
 
 
     def _build_flood_ports(self):
         """Calculates ports to use for flooding"""
-        my_root_distance = len(self.shortest_path_to_root())
+        path_to_root = self.shortest_path_to_root()
+        if path_to_root is None:
+            # node is disconnected from the rest of the network
+            return
+        my_root_distance = len(path_to_root)
         self.towards_root_stack_ports = []
         self.away_from_root_stack_ports = []
         for port in self.stack_ports:
             peer_dp = port.stack['dp']
-            peer_root_distance = len(peer_dp.shortest_path_to_root())
+            peer_path_to_root = peer_dp.shortest_path_to_root()
+            if peer_path_to_root is None:
+            # peer node is disconnected from the rest of the network
+                continue
+            peer_root_distance = len(peer_path_to_root)
             if peer_root_distance > my_root_distance:
                 self.away_from_root_stack_ports.append(port)
             elif peer_root_distance < my_root_distance:
