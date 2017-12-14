@@ -344,12 +344,6 @@ class Valve(object):
             {'DP_CHANGE': {
                 'reason': 'cold_start'}})
         ofmsgs = []
-        ofmsgs.append(valve_of.faucet_config())
-        ofmsgs.append(valve_of.faucet_async())
-        ofmsgs.extend(self._add_default_flows())
-        ofmsgs.extend(self._add_ports_and_vlans(discovered_up_port_nums))
-        ofmsgs.extend(self._add_controller_learn_flow())
-        self.dp.running = True
 
         if self.dp.stack:
             graph = self.dp.stack['graph']
@@ -363,6 +357,15 @@ class Valve(object):
                     # TODO: Check if port is up on the peer.
                     #       Requires access to all dps
                     self.dp.stack_add_edge(port, graph)
+        
+        ofmsgs.append(valve_of.faucet_config())
+        ofmsgs.append(valve_of.faucet_async())
+        ofmsgs.extend(self._add_default_flows())
+        ofmsgs.extend(self._add_ports_and_vlans(discovered_up_port_nums))
+        ofmsgs.extend(self._add_controller_learn_flow())
+        self.dp.running = True
+
+
 
         return ofmsgs
 
@@ -574,7 +577,7 @@ class Valve(object):
             if port.stack:
                 graph = self.dp.stack['graph']
                 dp_name = self.dp.name
-                dst_dp = port.stack['dp']
+                dst_dp = port.stack['dp'].name
                 if graph.has_edge(dp_name, dst_dp):
                     graph.remove_edge(dp_name, dst_dp)
                 vlans_with_deleted_ports.update(self.dp.vlans.values())
