@@ -440,8 +440,10 @@ Further sublevels of configuration can be configured as follows:
         edge_attr = make_edge_attr(edge_a, edge_z)
         edge_a_dp, _ = edge_a
         edge_z_dp, _ = edge_z
-    
-        graph.add_edge(
+
+        if graph.has_node(edge_a_dp.name) and graph.has_node(edge_z_dp.name):
+            if not graph.has_edge(edge_a_dp.name, edge_z_dp.name):
+                graph.add_edge(
                     edge_a_dp.name, edge_z_dp.name,
                     key=edge_name, port_map=edge_attr)
         return edge_name 
@@ -450,8 +452,12 @@ Further sublevels of configuration can be configured as follows:
         """Return shortest path to a DP, as a list of DPs."""
         if self.stack is None:
             return None
-        return networkx.shortest_path(
-            self.stack['graph'], self.name, dest_dp)
+
+        try:
+            return networkx.shortest_path(
+                self.stack['graph'], self.name, dest_dp)
+        except (networkx.NetworkXNoPath, networkx.NodeNotFound):
+            return None
 
     def shortest_path_to_root(self):
         """Return shortest path to root DP, as list of DPs."""
