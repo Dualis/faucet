@@ -233,8 +233,8 @@ class ValveFloodStackManager(ValveFloodManager):
             elif peer_root_distance < my_root_distance:
                 new_towards_ports.add(port)
         updated_ports = set()
-        updated_ports.add(self.away_from_root_stack_ports ^ new_away_ports)
-        updated_ports.add(self.towards_root_stack_ports ^ new_towards_ports)
+        updated_ports |= self.away_from_root_stack_ports ^ new_away_ports
+        updated_ports |= self.towards_root_stack_ports ^ new_towards_ports
         self.away_from_root_stack_ports = new_away_ports
         self.towards_root_stack_ports = new_towards_ports
         return updated_ports
@@ -321,7 +321,7 @@ class ValveFloodStackManager(ValveFloodManager):
         updated_ports = self._build_flood_ports()
         if updated_ports:
             # TODO: Propagate to the connected dps
-            continue
+            pass
         return self._build_multiout_flood_rules(vlan, command)
 
     def _vlan_all_ports(self, vlan, exclude_unicast):
