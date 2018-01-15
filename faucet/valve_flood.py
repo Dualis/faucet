@@ -205,28 +205,39 @@ class ValveFloodStackManager(ValveFloodManager):
         self.stack_ports = stack_ports
         self.shortest_path_to_root = dp_shortest_path_to_root
         self.shortest_path_port = shortest_path_port
-
+        self.away_from_root_stack_ports = set()
+        self.towards_root_stack_ports = set()
+        
 
     def _build_flood_ports(self):
-        """Calculates ports to use for flooding"""
+        """Calculates ports to use for flooding.
+            This is called in two cases:
+             - During a cold start
+             - On a config or port status change
+            
+            In the second case, we need to propagate updates."""
         path_to_root = self.shortest_path_to_root()
         if path_to_root is None:
             # node is disconnected from the rest of the network
             return
         my_root_distance = len(path_to_root)
-        self.towards_root_stack_ports = []
-        self.away_from_root_stack_ports = []
+
+        new_away_ports = set()    
+        new_towards_ports = set()
         for port in self.stack_ports:
             peer_dp = port.stack['dp']
             peer_path_to_root = peer_dp.shortest_path_to_root()
-            if peer_path_to_root is None:
-            # peer node is disconnected from the rest of the network
-                continue
             peer_root_distance = len(peer_path_to_root)
             if peer_root_distance > my_root_distance:
-                self.away_from_root_stack_ports.append(port)
+                new_away_ports.add(port)
             elif peer_root_distance < my_root_distance:
-                self.towards_root_stack_ports.append(port)
+                new_towards_ports.add(port)
+        updated_ports = set()
+        updated_ports.add(self.away_from_root_stack_ports ^ new_away_ports)
+        updated_ports.add(self.towards_root_stack_ports ^ new_towards_ports)
+        self.away_from_root_stack_ports = new_away_ports
+        self.towards_root_stack_ports = new_towards_ports
+        return updated_ports
 
     def _build_flood_rule_actions(self, vlan, exclude_unicast, in_port):
         """Calculate flooding destinations based on this DP's position.
@@ -307,7 +318,10 @@ class ValveFloodStackManager(ValveFloodManager):
         if modify:
             command = valve_of.ofp.OFPFC_MODIFY_STRICT
         # TODO: group tables for stacking
-        self._build_flood_ports()
+        updated_ports = self._build_flood_ports()
+        if updated_ports:
+            # TODO: Propagate to the connected dps
+            continue
         return self._build_multiout_flood_rules(vlan, command)
 
     def _vlan_all_ports(self, vlan, exclude_unicast):
